@@ -1,4 +1,8 @@
 # InstallNwRtlSdr.com
+
+<img width="1664" height="896" alt="image" src="https://github.com/user-attachments/assets/0936a33f-0958-469f-be97-d13605cd8ee9" />
+
+
 ## Introduction 
 This repository is a weather website leveraging [Saratoga weather station scriptsi](https://saratoga-weather.org/scripts.php). 
 I have configured it to retrieve weather data from my home weather station, a [Davis Instruments Vantage Pro2.](https://www.davisinstruments.com/collections/vantage-pro2).
