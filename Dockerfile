@@ -51,3 +51,10 @@ RUN sed -i -e '/^#AddDef/s/\#AddDef/AddDef/' /etc/apache2/conf-enabled/charset.c
     sed -i -e '/fcsticonstype/s/jpg/gif/' Settings.php && \
     chmod +x customizeSettings.sh   && . ./customizeSettings.sh
 
+# WeeWX graphs/data in ./mount change every archive interval: make browsers
+# and Cloudflare revalidate instead of caching them for hours
+RUN a2enmod headers && \
+    printf '<Directory /var/www/html/mount>\n    Header set Cache-Control "no-cache"\n</Directory>\n' \
+        > /etc/apache2/conf-available/mount-nocache.conf && \
+    a2enconf mount-nocache
+
