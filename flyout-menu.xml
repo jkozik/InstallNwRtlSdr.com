@@ -53,15 +53,15 @@
 		<item caption="UV Index Forecast" link="wxuvforecast.php"/>
 	</item>
 	<item caption="Almanac" title="Trends, Sun/Moon, Earthquakes">
-	    	<item wxonly="WD,MB,MH,CU" caption="Weather Trends" link="wxtrends.php"/>
-		<item wxonly="WD,VWS,WL,CU,MH,WCT,WV" caption="Station Graphs" link="wxgraphs.php"/>
+	    	<item wxonly="WD,MB,MH,CU,WEEWX" caption="Weather Trends" link="wxtrends.php"/>
+		<item wxonly="WD,VWS,WL,CU,MH,WCT,WV,WEEWX" caption="Station Graphs" link="wxgraphs.php"/>
 		<item wxonly="WCT" caption="Station Records" link="wxstationrecords.php"/>
 		<item wxonly="WCT" caption="Station Journal" link="wxjournal.php"/>
 		<item wxonly="WCT" caption="Recent Weather Summary" link="wxrecent.php"/>
 		<item wxonly="WCT" caption="Summary This Month" link="wxthismonth.php"/>
 		<item wxonly="WCT" caption="Summary Year over Year" link="wxyearoveryear.php"/>
 		<item wxonly="WD" caption="Station Monthly Reports" link="wxhistory.php"/>
-		<item wxonly="CU,VWS,WL,WV" caption="NOAA reports" link="wxnoaaclimatereports.php"/>
+		<item wxonly="CU,VWS,WL,WV,WEEWX" caption="NOAA reports" link="wxnoaaclimatereports.php"/>
 		<item caption="Sun/Moon Almanac" link="wxastronomy.php"/>
 		<item caption="Earthquake activity" link="wxquake.php"/>
 		<item caption="Nearby METAR Reports" link="wxmetar.php"/>

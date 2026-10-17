@@ -36,15 +36,28 @@ $SITE[\x27NWSalertsCodes\x27] = array( \
 ' Settings.php
 
 echo "Customize Settings-weather.php"
-sed -i  -e  '/SITE\[\x27realtimefile/s/realtime.txt/mount\/cumulus\/realtime.txt/' \
-        -e  '/SITE\[\x27graphImageDir/s/images/mount\/cumulus\/images/' \
-        -e  '/SITE\[\x27WXtags/s/CUtags/mount\/saratoga\/CUtags/' \
-        -e  '/SITE\[\x27NOAAdir/s/Reports/mount\/cumulus\/Reports/' \
+sed -i  -e  '/SITE\[\x27clientrawfile/s/clientraw.txt/mount\/clientraw.txt/' \
+        -e  '/SITE\[\x27WXtags/s/WEEWXtags.php/mount\/WEEWXtags.php/' \
+        -e  '/SITE\[\x27graphImageDir/s/\.\//.\/mount\//' \
+        -e  '/SITE\[\x27NOAAdir/s/\.\/NOAA\//.\/mount\/NOAA\//' \
         -e  '/SITE\[\x27conditionsMETAR/s/= \x27.*;/= \x27KDPA\x27;/' \
         Settings-weather.php
+# WEEWXtags.php $date is day/month/year ($datefmt = 'd/m/y')
+grep -q 'WDdateMDY' Settings-weather.php || \
+  sed -i '/SITE\[\x27WXtags/a\$SITE[\x27WDdateMDY\x27] = false; // WEEWXtags.php dates are d/m/y' Settings-weather.php
 
-echo "Customize ajaxCUwx.js"
-sed -i '/realtimeFile = \x27/s/realtime.txt/.\/mount\/cumulus\/realtime.txt/' ajaxCUwx.js
+echo "Customize include-wxstatus.php: WeeWX clientraw.txt updates every 5 min archive, not realtime"
+sed -i '/WXsoftware.. == .WEEWX. and isset(\$SITE\[.clientrawfile/,+1s/\$SITE\[\x27clientrawfile\x27\],60+30,/$SITE[\x27clientrawfile\x27],60*5+15,/' include-wxstatus.php
+
+echo "Customize check-fetch-times.php: strip :port from HTTP_HOST before gethostbyaddr()"
+grep -q "preg_replace('/:\\\\d+\$/'" check-fetch-times.php || \
+  sed -i "/\$ourIP = gethostbyname(\$ourHost);/i\\\\t\t\$ourHost = preg_replace('/:\\\\d+\$/','',\$ourHost);" check-fetch-times.php
+
+echo "Customize ajaxWEEWXwx.js"
+sed -i '/^var clientrawFile = \x27/s/clientraw.txt/.\/mount\/clientraw.txt/' ajaxWEEWXwx.js
+
+#echo "Customize ajaxCUwx.js"
+#sed -i '/realtimeFile = \x27/s/realtime.txt/.\/mount\/cumulus\/realtime.txt/' ajaxCUwx.js
 
 echo "Customize wxquake.php"
 sed -i -e '/$setLatitude/s//#&/' \
@@ -116,13 +129,28 @@ error_reporting(0);
 
 echo "Customize davconvp2CW.php"
 sed -i '/graphurl/s/davcon24.txt/mount\/saratoga\/davcon24.txt/'  davconvp2CW.php
+# WeeWX writes WD-style clientraw.txt/clientrawextra.txt, so run davcon in WD mode
+grep -q "WXsoftware == 'WEEWX'" davconvp2CW.php || \
+  sed -i -e "/if (isset(\$SITE\[.WXsoftware.\])) {\$WXsoftware = \$SITE\[.WXsoftware.\];}/a\\      if (\$WXsoftware == \x27WEEWX\x27) {\$WXsoftware = \x27WD\x27;}  // WeeWX writes WD-style clientraw files\n      if (!isset(\$vpforecasttext)) {\$vpforecasttext = \x27\x27;}  // not provided by WEEWXtags.php" \
+         -e "s|^\$graphurl = \x27./clientrawextra.txt\x27;|\$graphurl = \x27./mount/clientrawextra.txt\x27;|" davconvp2CW.php
+# clientraw.txt is always metric; have davcon convert to US units (F, mph, inHg, in)
+sed -i "s/^\$uomsys     = 'M';/\$uomsys     = 'I';/" davconvp2CW.php
+# Vantage Pro2 has UV and Solar sensors: show UV/Solar/ET on the console
+sed -i "s/^\$vp2Plus    = 'N';/\$vp2Plus    = 'Y';/" davconvp2CW.php
 
 echo "Customize Steel Gauges"
 sed -i '/Combined/,$s/scripts/.\/ssg\/scripts/' ssg/gauges-ss-basic-inc.php
-sed -i -e '/showUvGauge/s/true/false/' \
-	-e '/imgPathURL/s/images/mount\/cumulus\/images/' \
-	-e '/realTimeUrlCumulus/s/realtimegauges.txt/.\/mount\/saratoga\/realtimegauges.txt/' \
-	-e '/showSolarGauge/s/true/false/' ssg/scripts/gauges.js
+# WeeWX: gauge-data.txt from the weewx-realtime_gauge-data extension, written to the share root.
+# No Cumulus-style trend images with WeeWX, so turn off the pop-up graphs.
+# UV and Solar gauges stay on (defaults): the Vantage Pro2 has both sensors.
+sed -i -e '/^\s*weatherProgram\s*:/s/: [0-9]*,/: 6,/' \
+	-e '/realTimeUrlWeewx/s/\x27gauge-data.txt\x27/\x27.\/mount\/gauge-data.txt\x27/' \
+	-e '/^\s*showPopupGraphs\s*:/s/true/false/' ssg/scripts/gauges.js
+# gauge-data.txt is currently generated every 5 min report cycle, not realtime.
+# Poll every 60s and allow 10 min without new data before showing the station offline.
+# When WeeWX moves to realtime gauge-data, delete these two lines to get the defaults (15s / 3 min).
+sed -i -e '/^\s*realtimeInterval\s*:/s/: [0-9]*,/: 60,/' \
+	-e '/^\s*stationTimeout\s*:/s/: [0-9]*,/: 10,/' ssg/scripts/gauges.js
 
 
 echo "rename wxindex.php to index.php"
@@ -191,8 +219,7 @@ grep -q '(float)\$gust > 0' noaafct/noaaDigitalGenerateHtml.php || \
       sed -i "s/\$array\['updated'\];/\$array['updated'] ?? null;/" noaafct/noaaLoadJson.php
       sed -i "s/\$time\t\t= strtotime(\$string);/\$time\t\t= \$string !== null ? strtotime(\$string) : false;/" noaafct/noaaLoadJson.php
       sed -i "s/= date('c', strtotime(\$string ) );/= \$string !== null ? date('c', strtotime(\$string)) : '';/" noaafct/noaaLoadJson.php
-      sed -i "s/date( \$dateLongFormat, \$time).' '.date(\$timeFormat, \$time)/\$time !== false ? date(\$dateLongFormat, \$time).' '.date(\$timeFormat, \$time) : ''/"
-  noaafct/noaaLoadJson.php
+      sed -i "s/date( \$dateLongFormat, \$time).' '.date(\$timeFormat, \$time)/\$time !== false ? date(\$dateLongFormat, \$time).' '.date(\$timeFormat, \$time) : ''/" noaafct/noaaLoadJson.php
   }
 
 
@@ -204,6 +231,13 @@ echo "New Radar view in Settings.php"
 sed -i -e '/NWSregion/s/sw/nc/' Settings.php
 
 
-echo "Fix PHP 8.1 deprecation in CU-defs.php"
-sed -i '/windlabel\[ fmod/s/fmod(/(int)fmod(/' CU-defs.php
+#echo "Fix PHP 8.1 deprecation in CU-defs.php"
+#sed -i '/windlabel\[ fmod/s/fmod(/(int)fmod(/' CU-defs.php
 
+
+echo "Fix PHP 8 errors in WEEWX-defs.php (non-numeric '--' values, \${var} deprecation)"
+grep -q 'is_numeric(\$rawwind)' WEEWX-defs.php || \
+  sed -i "s/^\(\s*\)\$WINDkts = 0.0;/\1\$WINDkts = 0.0;\n\1if(!is_numeric(\$rawwind)) { \$rawwind = 0.0; }/" WEEWX-defs.php
+grep -q 'is_numeric(\$WC)' WEEWX-defs.php || \
+  sed -i "/convert F to C if need be/i\\  if(!is_numeric(\$WC)) { \$WC = \$TC; }\n  if(!is_numeric(\$HC)) { \$HC = \$TC; }" WEEWX-defs.php
+sed -i "s/\\\${\(now_[a-z]*\)}/{\$\1}/g" WEEWX-defs.php

@@ -1,11 +1,11 @@
 services:
-  nw.com:
+  nwrtlsdr.com:
     build:
       context: ./
       dockerfile: Dockerfile
-    image: jkozik/nw.com
+    image: jkozik/nwrtlsdr.com
     ports:
-      - "8085:80"
-    container_name: nw.com-app
+      - "8086:80"
+    container_name: nwrtlsdr.com-app
     volumes:
-      - /mnt/wjr_share:/var/www/html/mount
+      - /mnt/weewxrtlsdr_share:/var/www/html/mount
