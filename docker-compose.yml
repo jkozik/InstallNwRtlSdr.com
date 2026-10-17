@@ -7,5 +7,12 @@ services:
     ports:
       - "8086:80"
     container_name: nwrtlsdr.com-app
+    restart: unless-stopped
     volumes:
       - /mnt/weewxrtlsdr_share:/var/www/html/mount
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "--max-time", "5", "http://localhost/mount/clientraw.txt"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 30s
