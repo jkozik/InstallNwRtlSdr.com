@@ -222,6 +222,19 @@ grep -q '(float)\$gust > 0' noaafct/noaaDigitalGenerateHtml.php || \
       sed -i "s/date( \$dateLongFormat, \$time).' '.date(\$timeFormat, \$time)/\$time !== false ? date(\$dateLongFormat, \$time).' '.date(\$timeFormat, \$time) : ''/" noaafct/noaaLoadJson.php
   }
 
+# Fix: WEEWXtags.php sets $humidity (and possibly $temperature) to '--' when WeeWX has no reading;
+# WEEWX_CBI() then does string * float, a fatal TypeError in PHP 8 that takes down every page.
+# Guard: grep skips if the is_numeric() check is already present.
+grep -q 'is_numeric(\$inHumidity)' WEEWX-defs.php || \
+    sed -i 's/^\(function WEEWX_CBI(\$inTemp,\$inTempUOM,\$inHumidity) {\)/\1\n\tif(!is_numeric($inTemp) or !is_numeric($inHumidity)) { return array(\x27--\x27,\x27\x27,\x27\x27); }/' \
+        WEEWX-defs.php
+
+# Fix: same '--' values reach the gizmo's "since last hour" math ($Tnow-$TLast) for humidity/dew point/baro.
+# Guard: grep skips if the is_numeric() check is already present.
+grep -q 'is_numeric(\$Tnow)' ajax-gizmo.php || \
+    sed -i 's/echo gizmo_gen_difference(\$Tnow, \$Tnow-\$TLast,/if(is_numeric($Tnow) and is_numeric($TLast)) &/' \
+        ajax-gizmo.php
+
 
 echo "rename wxindex.php to index.php"
 mv wxindex.php index.php

@@ -22,7 +22,7 @@ COPY favicon.ico     /var/www/html
 RUN cd /var/www/html && \
     unzip -o Base-USA.zip  && rm Base-USA.zip && \
     unzip -o WEEWX-plugin.zip && rm WEEWX-plugin.zip && \
-    unzip -o saratoga-icons2.zip && rm saratoga-icons2.zip && \
+    unzip -o saratoga-icons2.zip -x DualImage.php && rm saratoga-icons2.zip && \
     unzip -o meteotreviglio-icons.zip && rm meteotreviglio-icons.zip && \
     unzip -o noaafct.zip && cp noaafct/wxStartNoaaFct.php /var/www/html && rm noaafct.zip && \
     unzip -o davconsoleCW241_Full.zip  && rm davconsoleCW241_Full.zip && \
