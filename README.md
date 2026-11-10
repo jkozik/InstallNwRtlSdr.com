@@ -289,3 +289,6 @@ Updated to work with ssh access.
 
 
 
+
+---
+**Security note (Nov 2026):** `jkozik/nwrtlsdr.com:v1.1` was rebuilt on PHP 8.2.35 to fix the critical PHP2Shell RCE vulnerabilities ([CVE-2026-109618 / CVE-2026-109619](https://www.netspi.com/blog/executive-blog/critical-vulnerability/php2shell-unauthenticated-rce-on-php-cve-2026-109618-cve-2026-109619/)). The Dockerfile also sets `session.upload_progress.enabled=0` as extra hardening.
